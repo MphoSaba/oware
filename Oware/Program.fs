@@ -20,21 +20,16 @@ let getSeeds n board =
 
 let gameState board =  //Checks the state of the game and returns the state at which the game is in
     let south,north = board.score 
-    match board.pos with
-    | South ->
-        match south=24 && north=24 with
+    match south>24, north>24 with
+    | true,false -> "South won"
+    | false, true -> "North won"
+    | _ -> 
+        match north=24 && south=24 with
         | true -> "Game ended in a draw"
         | false -> 
-            match south>24 with
-            | true -> "South won"
-            | false -> "South's turn"
-    | North ->
-        match south=24 && north=24 with
-        | true -> "Game ended in a draw"
-        | false ->
-            match north>24 with
-            | true -> "North won"
-            | false -> "North's turn"
+            match board.pos with
+            | North -> "North's turn"
+            | South -> "South's turn"
 
 let resetter board n = 
     let (a,b,c,d,e,f,g,h,i,j,k,l) = board.houses
