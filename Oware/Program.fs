@@ -31,6 +31,20 @@ let gameState board =  //Checks the state of the game and returns the state at w
             | North -> "North's turn"
             | South -> "South's turn"
 
+let checkItOut board original=
+    let (a,b,c,d,e,f,g,h,i,j,k,l) = board.houses
+    match board.pos with
+    | North -> 
+        match board.houses with
+        |(0,0,0,0,0,0,0,0,0,0,0,0) -> board
+        | (0,0,0,0,0,0,g,h,i,j,k,l) -> original
+        | _ -> board
+    | South -> 
+        match board.houses with
+        |(0,0,0,0,0,0,0,0,0,0,0,0) -> board
+        |(a,b,c,d,e,f,0,0,0,0,0,0) -> original
+        | _ -> board
+
 let resetter board n = 
     let (a,b,c,d,e,f,g,h,i,j,k,l) = board.houses
     match n with
@@ -49,28 +63,28 @@ let resetter board n =
     | _ -> failwith "Error"
 
 let scoreAdder board = 
-    let rec adder board seeds =
+    let rec adder board seeds original = 
         let (a,b,c,d,e,f,g,h,i,j,k,l) = board.houses
         let south,north= board.score
         match (seeds=2 || seeds=3) with
         | true -> 
             match board.currentPos with
-            | 1-> {board with houses=(0,b,c,d,e,f,g,h,i,j,k,l);score=(south,north+a)}
-            | 2 -> adder {board with houses=(a,0,c,d,e,f,g,h,i,j,k,l);score=(south,north+b); currentPos=1} a
-            | 3 -> adder {board with houses=(a,b,0,d,e,f,g,h,i,j,k,l);score=(south,north+c); currentPos=2} b
-            | 4 -> adder {board with houses=(a,b,c,0,e,f,g,h,i,j,k,l);score=(south,north+d); currentPos=3} c
-            | 5 -> adder {board with houses=(a,b,c,d,0,f,g,h,i,j,k,l);score=(south,north+e); currentPos=4} d
-            | 6 -> adder {board with houses=(a,b,c,d,e,0,g,h,i,j,k,l);score=(south,north+f); currentPos=5} e
-            | 7-> {board with houses=(a,b,c,d,e,f,0,h,i,j,k,l);score=(south+g,north)}
-            | 8-> adder {board with houses=(a,b,c,d,e,f,g,0,i,j,k,l);score=(south+h,north);currentPos=7} g
-            | 9-> adder {board with houses=(a,b,c,d,e,f,g,h,0,j,k,l);score=(south+i,north);currentPos=8} h
-            | 10-> adder {board with houses=(a,b,c,d,e,f,g,h,i,0,k,l);score=(south+j,north);currentPos=9} i
-            | 11-> adder {board with houses=(a,b,c,d,e,f,g,h,i,j,0,l);score=(south+k,north);currentPos=10} j
-            | 12-> adder {board with houses=(a,b,c,d,e,f,g,h,i,j,k,0);score=(south+l,north);currentPos=11} k
+            | 1-> checkItOut ({board with houses=(0,b,c,d,e,f,g,h,i,j,k,l);score=(south,north+a)}) original
+            | 2 -> adder {board with houses=(a,0,c,d,e,f,g,h,i,j,k,l);score=(south,north+b); currentPos=1} a board
+            | 3 -> adder {board with houses=(a,b,0,d,e,f,g,h,i,j,k,l);score=(south,north+c); currentPos=2} b board
+            | 4 -> adder {board with houses=(a,b,c,0,e,f,g,h,i,j,k,l);score=(south,north+d); currentPos=3} c board
+            | 5 -> adder {board with houses=(a,b,c,d,0,f,g,h,i,j,k,l);score=(south,north+e); currentPos=4} d board
+            | 6 -> adder {board with houses=(a,b,c,d,e,0,g,h,i,j,k,l);score=(south,north+f); currentPos=5} e board
+            | 7-> checkItOut ({board with houses=(a,b,c,d,e,f,0,h,i,j,k,l);score=(south+g,north)}) original
+            | 8-> adder {board with houses=(a,b,c,d,e,f,g,0,i,j,k,l);score=(south+h,north); currentPos=7} g board
+            | 9-> adder {board with houses=(a,b,c,d,e,f,g,h,0,j,k,l);score=(south+i,north);currentPos=8} h board
+            | 10-> adder {board with houses=(a,b,c,d,e,f,g,h,i,0,k,l);score=(south+j,north);currentPos=9} i board
+            | 11-> adder {board with houses=(a,b,c,d,e,f,g,h,i,j,0,l);score=(south+k,north);currentPos=10} j board
+            | 12-> adder {board with houses=(a,b,c,d,e,f,g,h,i,j,k,0);score=(south+l,north);currentPos=11} k board
             | _ -> failwith "Error"
-        | false -> board
+        | false -> checkItOut board original
     let seeds = getSeeds board.currentPos board
-    adder board seeds
+    adder board seeds board
 
 let scoreChecker board =
     let (south,north) = board.score
@@ -112,9 +126,9 @@ let plantSeeds n board =
 
 let checker board =
     let (a,b,c,d,e,f,g,h,i,j,k,l) = board.houses
-    match board.houses,board.pos with
-    |(a,b,c,d,e,f,0,0,0,0,0,0),North -> false
-    | (0,0,0,0,0,0,g,h,i,j,k,l),South -> false 
+    match board.houses with
+    |(a,b,c,d,e,f,0,0,0,0,0,0) -> false
+    | (0,0,0,0,0,0,g,h,i,j,k,l) -> false 
     | _ -> true 
 
 //used with useHouse
@@ -124,21 +138,19 @@ let useHouse n board =
         match board.pos with
         | South ->
             match n with 
-            | 1|2|3|4|5|6-> 
-                let myBoard = plantSeeds n board
+            | 1|2|3|4|5|6->  
                 match getSeeds n board>0 with
                 | true -> 
-                    let used = scoreChecker myBoard
+                    let used = scoreChecker (plantSeeds n board)
                     {used with pos=North}
                 | _ -> board
             | _ -> board
         | North -> 
             match n with
             | 7|8|9|10|11|12 ->
-                let myBoard = plantSeeds n board
                 match getSeeds n board>0 with
                 | true -> 
-                    let used = scoreChecker myBoard
+                    let used = scoreChecker (plantSeeds n board)
                     {used with pos=South}
                 | _ -> board
             | _ -> board
