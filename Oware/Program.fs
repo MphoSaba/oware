@@ -131,21 +131,21 @@ let useHouse n board =
             match n with 
             | 1|2|3|4|5|6-> 
                 let myBoard = plantSeeds n board
-                match checker myBoard with
-                | true -> 
+                match checker myBoard,getSeeds n board>0 with
+                | true,true -> 
                     let used = scoreChecker myBoard
                     {used with pos=North}
-                | false -> board
+                | _ -> board
             | _ -> board
         | North -> 
             match n with
             | 7|8|9|10|11|12 ->
                 let myBoard = plantSeeds n board
-                match checker myBoard with
-                | true -> 
+                match checker myBoard,getSeeds n board>0 with
+                | true,true -> 
                     let used = scoreChecker myBoard
                     {used with pos=South}
-                | false -> board
+                | _ -> board
             | _ -> board
     | false ->  board 
         
