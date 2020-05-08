@@ -53,29 +53,11 @@ let resetter board n =
     | 12 -> {board with houses=(a,b,c,d,e,f,g,h,i,j,k,0)}
     | _ -> failwith "Error"
 
-let southScore board =
-    let rec adder board seeds = 
-        let (a,b,c,d,e,f,g,h,i,j,k,l) = board.houses
-        let south,north = board.score
-        match (seeds=3 || seeds=2) with
-        | true -> 
-            match board.currentPos with
-            | 7-> {board with houses=(a,b,c,d,e,f,0,h,i,j,k,l);score=(south+g,north)}
-            | 8-> adder {board with houses=(a,b,c,d,e,f,g,0,i,j,k,l);score=(south+h,north);currentPos=7} g
-            | 9-> adder {board with houses=(a,b,c,d,e,f,g,h,0,j,k,l);score=(south+i,north);currentPos=8} h
-            | 10-> adder {board with houses=(a,b,c,d,e,f,g,h,i,0,k,l);score=(south+j,north);currentPos=9} i
-            | 11-> adder {board with houses=(a,b,c,d,e,f,g,h,i,j,0,l);score=(south+k,north);currentPos=10} j
-            | 12-> adder {board with houses=(a,b,c,d,e,f,g,h,i,j,k,0);score=(south+l,north);currentPos=11} k
-            | _ -> failwith "Error"
-        | false -> board 
-    let seeds = getSeeds board.currentPos board
-    adder board seeds
-    
-let northScore board =
-    let rec adder board seeds = 
+let scoreAdder board = 
+    let rec adder board seeds =
         let (a,b,c,d,e,f,g,h,i,j,k,l) = board.houses
         let south,north= board.score
-        match (seeds=3 || seeds=2) with
+        match (seeds=2 || seeds=3) with
         | true -> 
             match board.currentPos with
             | 1-> {board with houses=(0,b,c,d,e,f,g,h,i,j,k,l);score=(south,north+a)}
@@ -84,8 +66,14 @@ let northScore board =
             | 4 -> adder {board with houses=(a,b,c,0,e,f,g,h,i,j,k,l);score=(south,north+d); currentPos=3} c
             | 5 -> adder {board with houses=(a,b,c,d,0,f,g,h,i,j,k,l);score=(south,north+e); currentPos=4} d
             | 6 -> adder {board with houses=(a,b,c,d,e,0,g,h,i,j,k,l);score=(south,north+f); currentPos=5} e
+            | 7-> {board with houses=(a,b,c,d,e,f,0,h,i,j,k,l);score=(south+g,north)}
+            | 8-> adder {board with houses=(a,b,c,d,e,f,g,0,i,j,k,l);score=(south+h,north);currentPos=7} g
+            | 9-> adder {board with houses=(a,b,c,d,e,f,g,h,0,j,k,l);score=(south+i,north);currentPos=8} h
+            | 10-> adder {board with houses=(a,b,c,d,e,f,g,h,i,0,k,l);score=(south+j,north);currentPos=9} i
+            | 11-> adder {board with houses=(a,b,c,d,e,f,g,h,i,j,0,l);score=(south+k,north);currentPos=10} j
+            | 12-> adder {board with houses=(a,b,c,d,e,f,g,h,i,j,k,0);score=(south+l,north);currentPos=11} k
             | _ -> failwith "Error"
-        | false -> board 
+        | false -> board
     let seeds = getSeeds board.currentPos board
     adder board seeds
 
@@ -94,16 +82,15 @@ let scoreChecker board =
     match board.pos with
     | South ->
         match board.currentPos with
-        | 7 | 8 | 9 | 10 | 11 | 12 -> southScore board
+        | 7 | 8 | 9 | 10 | 11 | 12 -> scoreAdder board
         | _ -> board
     | North ->
         match board.currentPos with
-        | 1 | 2 | 3 | 4 | 5 | 6 -> northScore board
-        | _ -> board
+        | 1 | 2 | 3 | 4 | 5 | 6 -> scoreAdder board
+        | _ -> board 
 
-//used with useHouse
-let useHouse n board = 
-    let rec myHouse board seeds n=
+let plantSeeds n board = 
+    let rec myHouse board seeds n =
         let (a,b,c,d,e,f,g,h,i,j,k,l) = board.houses
         match seeds>0 with
         | true->
@@ -127,37 +114,61 @@ let useHouse n board =
         |false -> resetter board n
     let seeds = getSeeds n board
     myHouse {board with currentPos=n} seeds n
+
+let checker board =
+    let (a,b,c,d,e,f,g,h,i,j,k,l) = board.houses
+    match board.houses with
+    |(a,b,c,d,e,f,0,0,0,0,0,0) -> false
+    | (0,0,0,0,0,0,g,h,i,j,k,l) -> false 
+    | _ -> true 
+
+//used with useHouse
+let useHouse n board = 
+    match checker board with
+    | true ->
+        match board.pos with
+        | South ->
+            match n with 
+            | 1|2|3|4|5|6-> 
+                let myBoard = plantSeeds n board
+                match checker myBoard with
+                | true -> 
+                    let used = scoreChecker myBoard
+                    {used with pos=North}
+                | false -> board
+            | _ -> board
+        | North -> 
+            match n with
+            | 7|8|9|10|11|12 ->
+                let myBoard = plantSeeds n board
+                match checker myBoard with
+                | true -> 
+                    let used = scoreChecker myBoard
+                    {used with pos=South}
+                | false -> board
+            | _ -> board
+    | false ->  board 
+        
 let start position =
     match position with
     | South -> {houses=(4,4,4,4,4,4,4,4,4,4,4,4); score=(0,0); pos=South; currentPos=0}
     | North -> {houses=(4,4,4,4,4,4,4,4,4,4,4,4); score=(0,0); pos=North; currentPos=0}
 
 let score board = board.score
-let playGame board =
-    let rec play newboard count =
-        let board = scoreChecker newboard
-        printf "\nIt is %A \nThe score is: %A \nAnd the board is as stands: %A" (gameState board) (score board) (board)
-        let x = Console.ReadLine() |> int
+
+let play_game board =
+    let rec play board =
         match gameState board with
-        | "Game ended in a draw" | "North won" | "South won" -> board
+        | "Game ended in a draw" | "South won" | "North won" -> board
         | _ -> 
-            match count%2=0,board.pos with
-            | true,South ->
-                match x with
-                | 1|2|3|4|5|6 -> play (useHouse x {board with pos=South}) (count+1)
-                | _ -> play board count 
-            | false,North ->
-                match x with
-                | 7|8|9|10|11|12 -> play (useHouse x {board with pos=North}) (count+1)
-                | _ -> play board count
-            | _ -> play board count
-    match board.pos with
-    | South -> play board 0
-    | North -> play board 1
+            printf "\nIt is %A \nThe score is: %A \nAnd the board is as stands: %A" (gameState board) (score board) (board)
+            let x = Console.ReadLine() |> int
+            play (useHouse x board)
+        
+    play board
 
 [<EntryPoint>]
 let main _ =
     let game = start South
-    let play = playGame game
-    printf "%A and %s" play (gameState play)
+    let play = play_game game
     0 // return an integer exit code
