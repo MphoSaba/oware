@@ -112,9 +112,9 @@ let plantSeeds n board =
 
 let checker board =
     let (a,b,c,d,e,f,g,h,i,j,k,l) = board.houses
-    match board.houses with
-    |(a,b,c,d,e,f,0,0,0,0,0,0) -> false
-    | (0,0,0,0,0,0,g,h,i,j,k,l) -> false 
+    match board.houses,board.pos with
+    |(a,b,c,d,e,f,0,0,0,0,0,0),North -> false
+    | (0,0,0,0,0,0,g,h,i,j,k,l),South -> false 
     | _ -> true 
 
 //used with useHouse
@@ -126,8 +126,8 @@ let useHouse n board =
             match n with 
             | 1|2|3|4|5|6-> 
                 let myBoard = plantSeeds n board
-                match checker myBoard,getSeeds n board>0 with
-                | true,true -> 
+                match getSeeds n board>0 with
+                | true -> 
                     let used = scoreChecker myBoard
                     {used with pos=North}
                 | _ -> board
@@ -136,8 +136,8 @@ let useHouse n board =
             match n with
             | 7|8|9|10|11|12 ->
                 let myBoard = plantSeeds n board
-                match checker myBoard,getSeeds n board>0 with
-                | true,true -> 
+                match getSeeds n board>0 with
+                | true -> 
                     let used = scoreChecker myBoard
                     {used with pos=South}
                 | _ -> board
